@@ -1,0 +1,41 @@
+{
+  "name": "@devfellowship/dfl-ux-paths-cli",
+  "version": "0.1.0",
+  "description": "CLI + JSON Schema for DFL UX Paths — versioned per-app user-flow mapping.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devfellowship/dfl-ux-paths.git"
+  },
+  "type": "module",
+  "bin": {
+    "dfl-ux-paths": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "schema",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
