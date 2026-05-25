@@ -1,7 +1,7 @@
 {
   "name": "@devfellowship/dfl-ux-paths-cli",
-  "version": "0.1.0",
-  "description": "CLI + JSON Schema for DFL UX Paths — versioned per-app user-flow mapping.",
+  "version": "0.2.0",
+  "description": "CLI + JSON Schema for DFL UX Paths — versioned per-app user-flow mapping. Schema v1.1 adds optional navigation metadata for executable persona scripts.",
   "license": "MIT",
   "repository": {
     "type": "git",
