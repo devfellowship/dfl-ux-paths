@@ -10,7 +10,7 @@ const program = new Command();
 program
   .name('dfl-ux-paths')
   .description('DFL UX Paths CLI — schema-validated app-flow mapping.')
-  .version('0.1.0');
+  .version('0.2.0');
 
 registerInit(program);
 registerValidate(program);
