@@ -1,4 +1,4 @@
-import type { UxPathsDoc } from './types.js';
+import type { UxPathsDoc, FlowStep } from './types.js';
 
 export interface FlowsDiffResult {
   screens: {
@@ -50,7 +50,7 @@ export function flowsDiff(a: UxPathsDoc, b: UxPathsDoc): FlowsDiffResult {
     if (aFlow.start !== bFlow.start) {
       reasons.push(`start: ${aFlow.start} → ${bFlow.start}`);
     }
-    if (!arraysEqual(aFlow.steps, bFlow.steps)) {
+    if (!stepArraysEqual(aFlow.steps, bFlow.steps)) {
       reasons.push(`steps changed (${aFlow.steps.length} → ${bFlow.steps.length})`);
     }
     if (!arraysEqual(aFlow.actions ?? [], bFlow.actions ?? [])) {
@@ -84,4 +84,22 @@ function arraysEqual(a: string[], b: string[]): boolean {
     if (a[i] !== b[i]) return false;
   }
   return true;
+}
+
+/**
+ * Compare flow step arrays. v1.0 steps are strings; v1.1 steps may be objects.
+ * Object steps compare on their canonical (target_screen ?? screen) id —
+ * sufficient for "did the flow's path change?" diffing.
+ */
+function stepArraysEqual(a: FlowStep[], b: FlowStep[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (stepKey(a[i]) !== stepKey(b[i])) return false;
+  }
+  return true;
+}
+
+function stepKey(step: FlowStep): string {
+  if (typeof step === 'string') return step;
+  return step.target_screen ?? step.screen;
 }

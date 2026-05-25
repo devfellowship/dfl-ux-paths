@@ -1,12 +1,15 @@
-import type { UxPathsDoc, Screen, Action } from './types.js';
+import type { UxPathsDoc, Screen, Action, FlowStep } from './types.js';
 
 /**
  * Convert a UX-paths doc into a Mermaid `graph TD` diagram.
  *
  * Rules:
  * - Each screen becomes a node `id["name"]`.
+ * - v1.1 — screens with `prerequisites.auth_required = true` are prefixed with 🔒.
  * - Each action that has a `next_screen` becomes an edge `from -->|label| to`.
  * - Flows render as a subgraph showing the ordered sequence of screens.
+ *   v1.1 flow-step objects render with `action: selector` arrow labels.
+ * - v1.1 — screens with `navigation_path` get a `%% nav[<id>]:` comment summary.
  * - Dead-code entries render as a `%% dead-code:` comment block at the end.
  */
 export function jsonToMermaid(doc: UxPathsDoc): string {
@@ -17,10 +20,26 @@ export function jsonToMermaid(doc: UxPathsDoc): string {
   lines.push(`  %% app_id: ${doc.app_id}`);
   lines.push(`  %% app_version: ${doc.app_version}`);
   lines.push(`  %% schema_version: ${doc.schema_version}`);
+  if (doc.test_metadata?.base_url) {
+    lines.push(`  %% base_url: ${doc.test_metadata.base_url}`);
+  }
 
   // Screens
   for (const screen of doc.screens) {
-    lines.push(`  ${sanitizeId(screen.id)}["${escapeLabel(screen.name)}"]`);
+    const lockPrefix = screen.prerequisites?.auth_required ? '🔒 ' : '';
+    lines.push(
+      `  ${sanitizeId(screen.id)}["${escapeLabel(lockPrefix + screen.name)}"]`,
+    );
+  }
+
+  // navigation_path summary comments (v1.1)
+  for (const screen of doc.screens) {
+    if (screen.navigation_path && screen.navigation_path.length > 0) {
+      const summary = screen.navigation_path
+        .map((s) => `${s.action} ${s.selector}`)
+        .join(' -> ');
+      lines.push(`  %% nav[${sanitizeId(screen.id)}]: ${summary}`);
+    }
   }
 
   // Action edges
@@ -40,13 +59,21 @@ export function jsonToMermaid(doc: UxPathsDoc): string {
   for (const flow of doc.flows) {
     const flowKey = sanitizeId(`flow_${flow.name}`);
     lines.push(`  subgraph ${flowKey}["Flow: ${escapeLabel(flow.name)}"]`);
-    const steps = [flow.start, ...flow.steps];
-    for (let i = 0; i < steps.length - 1; i++) {
-      lines.push(`    ${sanitizeId(steps[i])} -.-> ${sanitizeId(steps[i + 1])}`);
+    const nodes = flowStepsToNodes(flow.start, flow.steps);
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const from = nodes[i];
+      const to = nodes[i + 1];
+      if (to.label) {
+        lines.push(
+          `    ${sanitizeId(from.id)} -.->|${escapeLabel(to.label)}| ${sanitizeId(to.id)}`,
+        );
+      } else {
+        lines.push(`    ${sanitizeId(from.id)} -.-> ${sanitizeId(to.id)}`);
+      }
     }
-    if (steps.length === 1) {
+    if (nodes.length === 1) {
       // Lone start; just ensure it's anchored in the subgraph
-      lines.push(`    ${sanitizeId(steps[0])}`);
+      lines.push(`    ${sanitizeId(nodes[0].id)}`);
     }
     lines.push('  end');
   }
@@ -60,6 +87,31 @@ export function jsonToMermaid(doc: UxPathsDoc): string {
   }
 
   return lines.join('\n') + '\n';
+}
+
+/**
+ * Resolve a flow's steps (string | object | mixed) into ordered (screenId, label?)
+ * nodes. v1.0 steps are plain screen ids; v1.1 step objects yield
+ * `action: selector` arrow labels where present.
+ */
+function flowStepsToNodes(
+  start: string,
+  steps: FlowStep[],
+): Array<{ id: string; label?: string }> {
+  const out: Array<{ id: string; label?: string }> = [{ id: start }];
+  for (const step of steps) {
+    if (typeof step === 'string') {
+      out.push({ id: step });
+    } else {
+      const id = step.target_screen ?? step.screen;
+      const labelParts: string[] = [];
+      if (step.action) labelParts.push(step.action);
+      if (step.selector) labelParts.push(step.selector);
+      const label = labelParts.length > 0 ? labelParts.join(': ') : undefined;
+      out.push({ id, label });
+    }
+  }
+  return out;
 }
 
 function sanitizeId(raw: string): string {

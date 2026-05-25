@@ -84,3 +84,90 @@ describe('jsonToMermaid', () => {
     expect(out).not.toContain('-->|Ping|');
   });
 });
+
+describe('jsonToMermaid — v1.1 enhancements', () => {
+  it('renders 🔒 prefix on screens with auth_required', () => {
+    const out = jsonToMermaid({
+      ...baseDoc,
+      schema_version: '1.1.0',
+      screens: [
+        { id: 'login', name: 'Login' },
+        {
+          id: 'dashboard',
+          name: 'Dashboard',
+          prerequisites: { auth_required: true },
+        },
+      ],
+      flows: [{ name: 'after_login', start: 'login', steps: ['dashboard'] }],
+    });
+    expect(out).toContain('login["Login"]');
+    expect(out).toContain('dashboard["🔒 Dashboard"]');
+  });
+
+  it('emits %% nav[<id>]: comment for screens with navigation_path', () => {
+    const out = jsonToMermaid({
+      ...baseDoc,
+      schema_version: '1.1.0',
+      screens: [
+        {
+          id: 'studio',
+          name: 'Studio',
+          navigation_path: [
+            { selector: 'text=Studio', action: 'tap' },
+            { selector: 'role=tab[name=Studio]', action: 'tap' },
+          ],
+        },
+      ],
+      flows: [{ name: 'land', start: 'studio', steps: [] }],
+    });
+    expect(out).toContain(
+      '%% nav[studio]: tap text=Studio -> tap role=tab[name=Studio]',
+    );
+  });
+
+  it('renders v1.1 flow step objects with action: selector arrow labels', () => {
+    const out = jsonToMermaid({
+      ...baseDoc,
+      schema_version: '1.1.0',
+      flows: [
+        {
+          name: 'rich',
+          start: 'home',
+          steps: [
+            {
+              screen: 'home',
+              action: 'tap',
+              selector: 'text=Next',
+              target_screen: 'lessons',
+            },
+          ],
+        },
+      ],
+    });
+    expect(out).toContain('home -.->|tap: text=Next| lessons');
+  });
+
+  it('falls back to dotted arrow when v1.1 step has no action/selector', () => {
+    const out = jsonToMermaid({
+      ...baseDoc,
+      schema_version: '1.1.0',
+      flows: [
+        {
+          name: 'bare',
+          start: 'home',
+          steps: [{ screen: 'home', target_screen: 'lessons' }],
+        },
+      ],
+    });
+    expect(out).toContain('home -.-> lessons');
+  });
+
+  it('includes base_url metadata comment when test_metadata.base_url present', () => {
+    const out = jsonToMermaid({
+      ...baseDoc,
+      schema_version: '1.1.0',
+      test_metadata: { base_url: 'https://mobile.devfellowship.com/' },
+    });
+    expect(out).toContain('%% base_url: https://mobile.devfellowship.com/');
+  });
+});
