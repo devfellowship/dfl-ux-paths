@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-test-build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dfl-runner]
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +36,7 @@ jobs:
         run: node bin/cli.js --version
 
   yaml-action-lint:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dfl-runner]
     steps:
       - uses: actions/checkout@v4
 
