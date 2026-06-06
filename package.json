@@ -1,7 +1,7 @@
 {
   "name": "@devfellowship/dfl-ux-paths-cli",
-  "version": "0.2.0",
-  "description": "CLI + JSON Schema for DFL UX Paths — versioned per-app user-flow mapping. Schema v1.1 adds optional navigation metadata for executable persona scripts.",
+  "version": "0.3.0",
+  "description": "CLI + JSON Schema for DFL UX Paths — versioned per-app user-flow mapping. Schema v1.2 adds optional source_ref (screen→repo file), screenshots[] (per platform×orientation), and a shared 1:1 route nomenclature, plus a route→file resolver (Expo Router / Next app-router).",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,6 +15,7 @@
     "bin",
     "dist",
     "schema",
+    "examples",
     "README.md"
   ],
   "scripts": {

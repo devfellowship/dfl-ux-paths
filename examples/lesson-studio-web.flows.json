@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.2.0",
+  "app_id": "dfl-lesson-studio",
+  "app_version": "2026-06-06-abc1234",
+  "generated_at": "2026-06-06T12:00:00Z",
+  "tech_stack": ["next", "react", "app-router"],
+  "test_metadata": {
+    "auth_strategy": "supabase-anon + CLAUDE_SMOKE creds",
+    "default_viewport": "responsive",
+    "base_url": "https://rec.devfellowship.com/",
+    "test_user_secret_path": "/shared/CLAUDE_SMOKE_USERNAME",
+    "notes": "Lesson Studio web, compared 1:1 against the Studio tab of Learn Mobile. Responsive @ 375x812 for the mobile-parity run."
+  },
+  "screens": [
+    {
+      "id": "studio_project_list",
+      "name": "Studio — project list",
+      "route": "studio",
+      "source_ref": {
+        "component_file": "app/studio/page.tsx",
+        "file_path_chain": ["app/layout.tsx", "app/studio/layout.tsx", "app/studio/page.tsx"]
+      },
+      "screenshots": [
+        {
+          "platform": "web",
+          "orientation": "portrait",
+          "viewport": "375x812",
+          "url": "https://devfellowship.s3.amazonaws.com/media/lesson-studio-web/studio_project_list-web-portrait-375x812.png",
+          "captured_at": "2026-06-06T12:05:00Z"
+        },
+        {
+          "platform": "web",
+          "orientation": "landscape",
+          "viewport": "1440x900",
+          "url": "https://devfellowship.s3.amazonaws.com/media/lesson-studio-web/studio_project_list-web-landscape-1440x900.png"
+        }
+      ],
+      "prerequisites": { "auth_required": true },
+      "actions": [
+        { "id": "tap_new_lesson", "label": "+ Nova Aula", "next_screen": "studio_template_picker" },
+        { "id": "open_project", "label": "Open existing project", "next_screen": "studio_editor" }
+      ]
+    },
+    {
+      "id": "studio_template_picker",
+      "name": "Studio — template picker",
+      "route": "studio/new",
+      "source_ref": {
+        "component_file": "app/studio/new/page.tsx"
+      },
+      "screenshots": [
+        {
+          "platform": "web",
+          "orientation": "portrait",
+          "viewport": "375x812",
+          "url": "https://devfellowship.s3.amazonaws.com/media/lesson-studio-web/studio_template_picker-web-portrait-375x812.png"
+        }
+      ],
+      "actions": [
+        { "id": "pick_template", "label": "Pick template", "next_screen": "studio_editor" }
+      ]
+    },
+    {
+      "id": "studio_editor",
+      "name": "Studio — lesson editor",
+      "route": "studio/project/:id/editor",
+      "source_ref": {
+        "component_file": "app/studio/project/[id]/editor/page.tsx",
+        "file_path_chain": [
+          "app/layout.tsx",
+          "app/studio/layout.tsx",
+          "app/studio/project/[id]/layout.tsx",
+          "app/studio/project/[id]/editor/page.tsx"
+        ]
+      },
+      "screenshots": [
+        {
+          "platform": "web",
+          "orientation": "portrait",
+          "viewport": "375x812",
+          "url": "https://devfellowship.s3.amazonaws.com/media/lesson-studio-web/studio_editor-web-portrait-375x812.png",
+          "captured_at": "2026-06-06T12:07:00Z"
+        }
+      ],
+      "actions": [
+        { "id": "save_lesson", "label": "Save", "side_effect": "PATCH lesson_studio.projects" }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "name": "create_lesson_in_studio",
+      "start": "studio_project_list",
+      "steps": [
+        {
+          "screen": "studio_project_list",
+          "action": "tap",
+          "selector": "text=+ Nova Aula",
+          "target_screen": "studio_template_picker",
+          "wait_for_target": "css=[data-testid=template-grid]"
+        },
+        {
+          "screen": "studio_template_picker",
+          "action": "tap",
+          "selector": "css=[data-testid=template-card]:first-child",
+          "target_screen": "studio_editor"
+        }
+      ],
+      "actions": ["tap_new_lesson", "pick_template", "save_lesson"]
+    }
+  ],
+  "dead_code": []
+}

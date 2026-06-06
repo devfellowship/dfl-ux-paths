@@ -50,6 +50,7 @@ Commands:
 | `dfl-ux-paths generate-mermaid [path]` | Emit `flows.mmd` (read-only Mermaid). |
 | `dfl-ux-paths diff <a.json> <b.json>` | Diff screens/actions/flows between two snapshots. |
 | `dfl-ux-paths stamp [path]` | Refresh `app_version` to `YYYY-MM-DD-<git-sha-short>` and bump `generated_at`. |
+| `dfl-ux-paths resolve-routes [repoPath]` | **v1.2** — Glob file-based routing (Expo Router / Next app-router) and emit a `route → component_file` map (JSON) to populate `source_ref.component_file`. |
 
 ## Schema (v1, minimal)
 
@@ -166,23 +167,118 @@ arrays are allowed during migration.
 - v1.1 flow-step objects produce richer arrow labels (`action: selector`).
 - `test_metadata.base_url` surfaces as a `%% base_url:` header comment.
 
+## Schema v1.2 — source-of-truth link to repo files + screenshots (additive)
+
+v1.2 makes `flows.json` the **source of truth** that links each screen to (a) the
+repo file that renders it and (b) screenshots per platform×orientation, plus a
+**shared route nomenclature** for 1:1 cross-app mapping. **All v1.2 fields are
+optional** — v1.0/v1.1 files continue to validate unchanged.
+
+> **`screen.id` is the sticky 1:1 join key.** Cross-app comparators (web ↔ mobile,
+> old build ↔ new build) pair screens **by shared `id`**. Keep ids stable across
+> versions and **identical across the apps you intend to map 1:1**, or diffs/parity
+> comparisons break. `route` is a human-readable shared name *on top* of the id.
+
+### New `screen` fields
+
+- **`route`** (re-documented in v1.2) — the **canonical shared route nomenclature**
+  for 1:1 cross-app mapping, e.g. `studio/project/:id/editor`. Lets two apps map by
+  the same route name even when their real URLs/deep-links differ. Use `:param` for
+  dynamic segments. (Still doubles as the screen's route/deep-link.)
+- **`source_ref`** `{ component_file, file_path_chain? }` — link to the repo file(s)
+  that render the screen (route/page/modal component). `component_file` is a
+  repo-relative path; optional `file_path_chain[]` is the ordered path from the app
+  entry (`App.tsx` / `app/_layout.tsx`) down to the component — the "tree" from app
+  root to the renderer. Populated by `resolve-routes` (below) or by hand.
+- **`screenshots[]`** `{ platform, orientation, viewport?, url, captured_at? }` —
+  rendered screenshots, one per `platform` (`web`|`mobile`) × `orientation`
+  (`portrait`|`landscape`) (× optional `viewport` like `375x812`). `url` points at a
+  committed image (e.g. S3 via `supabase-upload`) so humans **and** agents view the
+  same image for vision-first comparison.
+
+### Example (v1.2 opt-in)
+
+```jsonc
+{
+  "schema_version": "1.2.0",
+  "app_id": "dfl-lesson-studio",
+  "app_version": "2026-06-06-abc1234",
+  "screens": [
+    {
+      "id": "studio_editor",
+      "name": "Studio — lesson editor",
+      "route": "studio/project/:id/editor",
+      "source_ref": {
+        "component_file": "app/studio/project/[id]/editor/page.tsx",
+        "file_path_chain": ["app/layout.tsx", "app/studio/layout.tsx", "app/studio/project/[id]/editor/page.tsx"]
+      },
+      "screenshots": [
+        { "platform": "web", "orientation": "portrait", "viewport": "375x812", "url": "https://devfellowship.s3.amazonaws.com/media/lesson-studio-web/studio_editor-web-portrait-375x812.png", "captured_at": "2026-06-06T12:07:00Z" }
+      ]
+    }
+  ],
+  "flows": [{ "name": "noop", "start": "studio_editor", "steps": [] }]
+}
+```
+
+A full example lives at [`examples/lesson-studio-web.flows.json`](./examples/lesson-studio-web.flows.json).
+
+### Route → source-file resolver
+
+`source_ref.component_file` is populated from a deterministic glob of file-based
+routing — no AST in the common case:
+
+```bash
+# via the CLI
+dfl-ux-paths resolve-routes <app-repo-path> --pretty
+# or the standalone shim (after `pnpm run build`)
+node bin/resolve-routes.mjs <app-repo-path> --pretty
+```
+
+Output is `[{ route, component_file }]` on **stdout** (a one-line note on stderr,
+so stdout stays pipe-clean JSON). Supported conventions (auto-detected):
+
+- **Expo Router** (`app/` dir): file path → route. `app/profile/settings.tsx` →
+  `/profile/settings`; route groups `(tabs)` are stripped; `[id]` → `:id`;
+  `[...rest]` → `*rest`; `index` → parent route; `_layout` files are skipped.
+- **Next.js app-router**: only `page.(tsx|jsx|ts|js)` files define a route.
+  `app/studio/[id]/editor/page.tsx` → `/studio/:id/editor`; groups `(x)` stripped;
+  `[id]` → `:id`; `[...slug]` → `*slug`; `layout`/`loading`/`error`/`route` ignored.
+- **Fallback** — if neither is detected (e.g. a Vite + **React Router** SPA with an
+  imperative route config), the resolver returns `{ convention: "unknown", routes: [] }`
+  plus a note that imperative config needs manual / AST handling (not implemented).
+
+> Real run against `dfl-learn-mobile` (Expo Router) emitted 8 routes, e.g.
+> `app/(tabs)/course/[id].tsx → /course/:id`, `app/(tabs)/index.tsx → /`. Lesson
+> Studio web is Vite + React Router → falls into the manual-fallback bucket, so its
+> `source_ref` is hand-curated (see the example).
+
 ## Conventions
 
 - Path inside the consumer repo: `<app-repo>/.dfl-ux-paths/flows.json`.
   Keep both `flows.json` and `flows.mmd` versioned (the Mermaid file is
   auto-generated; never edit by hand).
 - `app_version` format: `YYYY-MM-DD-<git-sha-short>` (regex enforced by schema).
-- `schema_version` is `1.0.0` (minimal) or `1.1.0` (with navigation metadata).
-  v1.1 is additive — v1.0 files validate without changes.
+- `schema_version` is `1.0.0` (minimal), `1.1.0` (navigation metadata), or
+  `1.2.0` (source_ref + screenshots + shared route). Each bump is **additive** —
+  older files validate without changes. The schema `$id` is intentionally stable
+  across additive bumps (consumers pinned to the canonical URL keep working).
 - Screen / action / flow `id`s should be stable across versions to make
-  diffing useful. Treat ids as a contract.
+  diffing useful. Treat ids as a contract. `screen.id` is additionally the **1:1
+  join key** for cross-app comparison (web ↔ mobile) — keep it identical across
+  apps you map together.
 
 ## Phase plan
 
 - **Phase 0:** schema v1.0 + CLI scaffold + CI. ✅
 - **Phase 1:** backfill 4 DFL apps with hand-curated `flows.json` (v1.0). ✅
-- **Phase 1.1 (this PR):** schema v1.1 — additive navigation_path / prerequisites /
-  test_metadata for executable persona scripts. Backward compatible.
+- **Phase 1.1:** schema v1.1 — additive navigation_path / prerequisites /
+  test_metadata for executable persona scripts. Backward compatible. ✅
+- **Phase 1.2 (this PR):** schema v1.2 — additive `source_ref` (screen→repo file),
+  `screenshots[]` (per platform×orientation), and `route` documented as the shared
+  1:1 nomenclature; plus a `resolve-routes` command (Expo Router / Next app-router
+  glob → `route → component_file`). Backward compatible. Foundational for UI Parity v2
+  (plan `20260606-ui-parity-v2-flows-source-of-truth`).
 - **Phase 1.5:** publish CLI to npm so `npx @devfellowship/dfl-ux-paths-cli`
   works without a local clone (currently repo-local).
 - **Phase 2 (next):** GitHub Action that runs `validate` + `generate-mermaid`

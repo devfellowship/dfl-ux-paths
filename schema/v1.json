@@ -2,15 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/devfellowship/dfl-ux-paths/main/schema/v1.json",
   "title": "DFL UX Paths v1",
-  "description": "Versioned per-app user-flow JSON schema for migration-gap analysis and dead-code detection. Accepts schema_version 1.0.0 and 1.1.0 (additive — v1.1 adds optional navigation/prereq/test_metadata fields, backward compatible).",
+  "description": "Versioned per-app user-flow JSON schema for migration-gap analysis and dead-code detection. Accepts schema_version 1.0.0, 1.1.0, and 1.2.0 (all additive — v1.1 adds optional navigation/prereq/test_metadata fields; v1.2 adds optional source_ref (screen→repo file) and screenshots[] (per platform×orientation), and documents `route` as the canonical shared route nomenclature for 1:1 cross-app mapping. Backward compatible — v1.0/v1.1 files still validate).",
+  "$comment": "schema v1.2 — additive over v1.1. New optional screen fields: source_ref { component_file, file_path_chain? } links a screen to the repo file(s) that render it (Figma-Code-Connect style); screenshots[] { platform, orientation, viewport?, url, captured_at? } captures rendered images per platform×orientation for vision-first comparison. `screen.id` is the STICKY 1:1 JOIN KEY across apps — comparators pair screens by shared id. `route` is the canonical shared route nomenclature (e.g. studio/project/:id/editor) letting two apps map 1:1 by the same name even when their real URLs differ. Draft 2020-12. The file `$id` is intentionally unchanged across additive bumps so consumers pinned to the canonical URL keep working.",
   "type": "object",
   "required": ["schema_version", "app_id", "app_version", "screens", "flows"],
   "additionalProperties": false,
   "properties": {
     "schema_version": {
       "type": "string",
-      "enum": ["1.0.0", "1.1.0"],
-      "description": "Version of the dfl-ux-paths schema this file conforms to. v1.1.0 adds optional navigation_path, prerequisites, test_metadata, and richer flow step objects."
+      "enum": ["1.0.0", "1.1.0", "1.2.0"],
+      "description": "Version of the dfl-ux-paths schema this file conforms to. v1.1.0 adds optional navigation_path, prerequisites, test_metadata, and richer flow step objects. v1.2.0 adds optional screen.source_ref (screen→repo file link) and screen.screenshots[] (per platform×orientation), and documents `route` as the canonical shared route nomenclature for 1:1 cross-app mapping."
     },
     "app_id": {
       "type": "string",
@@ -58,7 +59,7 @@
         "id": {
           "type": "string",
           "minLength": 1,
-          "description": "Stable screen identifier (snake_case recommended)."
+          "description": "Stable screen identifier (snake_case recommended). REQUIRED. This is the STICKY 1:1 JOIN KEY across apps: cross-app comparators (web ↔ mobile, old build ↔ new build) pair screens by shared `id`. Treat it as a contract — keep ids stable across versions and identical across apps you intend to map 1:1, or diffs/parity comparisons break."
         },
         "name": {
           "type": "string",
@@ -67,7 +68,16 @@
         },
         "route": {
           "type": "string",
-          "description": "Route / path / deep-link associated with this screen."
+          "description": "v1.2 — canonical SHARED route nomenclature for 1:1 cross-app mapping (e.g. 'studio/project/:id/editor'). Lets two apps (web ↔ mobile) map by the same route name even when their real URLs/deep-links differ. Also doubles as the screen's route/path/deep-link when the app uses a single URL scheme. Use ':param' for dynamic segments. Optional, additive."
+        },
+        "source_ref": {
+          "$ref": "#/$defs/sourceRef",
+          "description": "v1.2 — link from this screen to the repo file(s) that render it (route/page/modal component). Figma-Code-Connect style. Optional, additive — populated by the route→file resolver (bin/resolve-routes.mjs) or by hand."
+        },
+        "screenshots": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/screenshot" },
+          "description": "v1.2 — rendered screenshots of this screen, one entry per platform×orientation(×viewport). URLs are committed (e.g. S3 via supabase-upload) so humans AND agents view the same image for vision-first comparison. Optional, additive."
         },
         "components": {
           "type": "array",
@@ -91,6 +101,57 @@
         "prerequisites": {
           "$ref": "#/$defs/prerequisites",
           "description": "v1.1 — preconditions that must hold for this screen to be reachable / functional."
+        }
+      }
+    },
+    "sourceRef": {
+      "type": "object",
+      "required": ["component_file"],
+      "additionalProperties": false,
+      "description": "v1.2 — points a screen at the repo file(s) that render it.",
+      "properties": {
+        "component_file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repo-relative path to the route/page/modal component that renders this screen (e.g. 'app/studio/[id]/editor.tsx' for Expo Router, 'app/studio/[id]/editor/page.tsx' for Next app-router). This is what the route→file resolver emits."
+        },
+        "file_path_chain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Optional — ordered repo-relative paths from the app entry (e.g. 'App.tsx' / 'app/_layout.tsx') down to the component, giving the 'tree' from app root to this screen's renderer."
+        }
+      }
+    },
+    "screenshot": {
+      "type": "object",
+      "required": ["platform", "orientation", "url"],
+      "additionalProperties": false,
+      "description": "v1.2 — one rendered screenshot of a screen, keyed by platform×orientation(×viewport).",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": ["web", "mobile"],
+          "description": "Rendering platform the screenshot was captured on."
+        },
+        "orientation": {
+          "type": "string",
+          "enum": ["portrait", "landscape"],
+          "description": "Device/viewport orientation."
+        },
+        "viewport": {
+          "type": "string",
+          "description": "Optional viewport dimensions string, e.g. '375x812' or '1440x900'."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Public URL of the committed screenshot (e.g. S3 via supabase-upload)."
+        },
+        "captured_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional ISO-8601 timestamp when the screenshot was captured."
         }
       }
     },

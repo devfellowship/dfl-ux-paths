@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-test-build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dfl-runner]
     steps:
       - uses: actions/checkout@v4
 
@@ -35,8 +35,14 @@ jobs:
       - name: Smoke run CLI
         run: node bin/cli.js --version
 
+      - name: Validate example flows.json (v1.2)
+        run: node bin/cli.js validate examples/lesson-studio-web.flows.json
+
+      - name: Smoke resolve-routes (standalone bin)
+        run: node bin/resolve-routes.mjs . || true
+
   yaml-action-lint:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dfl-runner]
     steps:
       - uses: actions/checkout@v4
 
