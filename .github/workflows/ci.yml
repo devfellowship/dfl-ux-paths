@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-test-build:
-    runs-on: [self-hosted, dfl-runner]
+    runs-on: ubuntu-latest  # public repo: self-hosted dfl-runner is blocked (allows_public=false). Authorized Tainan TG 2026-06-06. devfellowship PRIVATE repos stay dfl-runner.
     steps:
       - uses: actions/checkout@v4
 
@@ -42,7 +42,7 @@ jobs:
         run: node bin/resolve-routes.mjs . || true
 
   yaml-action-lint:
-    runs-on: [self-hosted, dfl-runner]
+    runs-on: ubuntu-latest  # public repo: self-hosted dfl-runner is blocked (allows_public=false). Authorized Tainan TG 2026-06-06. devfellowship PRIVATE repos stay dfl-runner.
     steps:
       - uses: actions/checkout@v4
 
