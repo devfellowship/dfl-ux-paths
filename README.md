@@ -123,7 +123,7 @@ arrays are allowed during migration.
   "test_metadata": {
     "auth_strategy": "supabase-anon + CLAUDE_SMOKE creds",
     "default_viewport": "mobile",
-    "base_url": "https://rec.devfellowship.com/",
+    "base_url": "https://lesson-studio.devfellowship.com/",
     "test_user_secret_path": "/shared/CLAUDE_SMOKE_USERNAME"
   },
   "screens": [
