@@ -10,7 +10,7 @@ jobs:
   lint-test-build:
     runs-on: ubuntu-latest  # public repo: self-hosted dfl-runner is blocked (allows_public=false). Authorized Tainan TG 2026-06-06. devfellowship PRIVATE repos stay dfl-runner.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
@@ -44,7 +44,7 @@ jobs:
   yaml-action-lint:
     runs-on: ubuntu-latest  # public repo: self-hosted dfl-runner is blocked (allows_public=false). Authorized Tainan TG 2026-06-06. devfellowship PRIVATE repos stay dfl-runner.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: actionlint
         uses: raven-actions/actionlint@v2
