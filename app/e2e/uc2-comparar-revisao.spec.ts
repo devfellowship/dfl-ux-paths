@@ -54,4 +54,26 @@ test.describe("UC2 — Comparar (Revisão lens)", () => {
     const addedRow = page.locator('[data-testid="compare-pair"][data-screen-id="studio_settings"]');
     await expect(addedRow).toHaveAttribute("data-status", "added");
   });
+
+  // Regression (P0 fix, 2026-07-08): navigating to Comparar via the tab (NOT
+  // a deep link) and hitting "Load" with the default RepoPicker state used to
+  // throw `SyntaxError: Unexpected token '<'` — the default `path` for a demo
+  // repo was hardcoded to the *real*-repo convention
+  // (".dfl-ux-paths/flows.json"), which 404s for a fixture repo and falls
+  // through to the SPA catch-all (HTML), which the client then tried to
+  // JSON.parse. See lib/api.ts DEMO_FIXTURE_PATHS + defaultPathFor.
+  test("clicking the Comparar tab + Load with default state does not throw — loads demo fixtures", async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("tab-comparar").click();
+
+    await expect(page.getByTestId("a-path")).toHaveValue("lesson-studio-web.flows.json");
+    await expect(page.getByTestId("b-path")).toHaveValue("learn-mobile-studio.flows.json");
+
+    await page.getByTestId("a-load").click();
+    await page.getByTestId("b-load").click();
+
+    await expect(page.getByTestId("compare-status-error")).toHaveCount(0);
+    await expect(page.getByTestId("compare-view")).toBeVisible();
+    await expect(page.getByTestId("stat-total")).toContainText("4");
+  });
 });
