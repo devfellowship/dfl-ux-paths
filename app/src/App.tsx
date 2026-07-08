@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FlowsJson } from "./lib/types";
-import { fetchFlows, FlowsFetchError, type RepoRef } from "./lib/api";
+import { fetchFlows, FlowsFetchError, defaultPathFor, defaultRefFor, type RepoRef } from "./lib/api";
 import { parseDeepLink, buildDeepLink, type ModeName } from "./lib/deeplink";
 import { RepoPicker, type RepoPickerValue } from "./components/RepoPicker";
 import { ExplorarAtlas } from "./modes/ExplorarAtlas";
@@ -8,7 +8,6 @@ import { CompararRevisao } from "./modes/CompararRevisao";
 import { RequisitosFluxo } from "./modes/RequisitosFluxo";
 import { RoteiroPresent } from "./modes/RoteiroPresent";
 
-const DEFAULT_PATH = ".dfl-ux-paths/flows.json";
 const DEMO_SINGLE: RepoRef = { repo: "demo/lesson-studio-web", path: "lesson-studio-web.flows.json", ref: "fixture" };
 const DEMO_A: RepoRef = { repo: "demo/lesson-studio-web", path: "lesson-studio-web.flows.json", ref: "fixture" };
 const DEMO_B: RepoRef = { repo: "demo/learn-mobile-studio", path: "learn-mobile-studio.flows.json", ref: "fixture" };
@@ -26,23 +25,38 @@ export default function App() {
   const initial = useMemo(() => parseDeepLink(location.search), []);
   const [mode, setMode] = useState<ModeName>(initial.mode || (initial.compareA ? "comparar" : "explorar"));
 
-  const [singleTarget, setSingleTarget] = useState<RepoPickerValue>(() => ({
-    repo: initial.single?.repo || DEMO_SINGLE.repo,
-    path: initial.single?.path || DEFAULT_PATH,
-    ref: initial.single?.ref || "main",
-  }));
+  // Fix (P0, 2026-07-08): default `path`/`ref` per-repo via defaultPathFor/
+  // defaultRefFor (see lib/api.ts) instead of a single hardcoded
+  // ".dfl-ux-paths/flows.json" — that constant is wrong for the bundled demo
+  // repos (each has its own fixture filename) and was the root cause of
+  // Comparar's "SyntaxError: Unexpected token '<'" (a demo repo 404s on that
+  // path, Express's SPA catch-all serves index.html, client JSON.parses HTML).
+  const [singleTarget, setSingleTarget] = useState<RepoPickerValue>(() => {
+    const repo = initial.single?.repo || DEMO_SINGLE.repo;
+    return {
+      repo,
+      path: initial.single?.path || defaultPathFor(repo),
+      ref: initial.single?.ref || defaultRefFor(repo),
+    };
+  });
   const [singleState, setSingleState] = useState<LoadState<FlowsJson>>({ status: "idle" });
 
-  const [aTarget, setATarget] = useState<RepoPickerValue>(() => ({
-    repo: initial.compareA?.repo || DEMO_A.repo,
-    path: initial.compareA?.path || DEFAULT_PATH,
-    ref: initial.compareA?.ref || "main",
-  }));
-  const [bTarget, setBTarget] = useState<RepoPickerValue>(() => ({
-    repo: initial.compareB?.repo || DEMO_B.repo,
-    path: initial.compareB?.path || DEFAULT_PATH,
-    ref: initial.compareB?.ref || "main",
-  }));
+  const [aTarget, setATarget] = useState<RepoPickerValue>(() => {
+    const repo = initial.compareA?.repo || DEMO_A.repo;
+    return {
+      repo,
+      path: initial.compareA?.path || defaultPathFor(repo),
+      ref: initial.compareA?.ref || defaultRefFor(repo),
+    };
+  });
+  const [bTarget, setBTarget] = useState<RepoPickerValue>(() => {
+    const repo = initial.compareB?.repo || DEMO_B.repo;
+    return {
+      repo,
+      path: initial.compareB?.path || defaultPathFor(repo),
+      ref: initial.compareB?.ref || defaultRefFor(repo),
+    };
+  });
   const [compareState, setCompareState] = useState<LoadState<[FlowsJson, FlowsJson]>>({ status: "idle" });
 
   const loadSingle = useCallback(async (target: RepoRef) => {
@@ -90,7 +104,7 @@ export default function App() {
   }, [mode, singleTarget, aTarget, bTarget]);
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className="w-full px-4 py-4 sm:px-6 lg:px-8">
       <header className="mb-4">
         <h1 className="text-xl font-bold">
           ux-paths <span className="text-white/40 font-normal text-sm">caminhos de UX</span>
@@ -121,9 +135,19 @@ export default function App() {
           </div>
           {compareState.status === "loading" && <p data-testid="compare-status-loading">Loading both sides…</p>}
           {compareState.status === "error" && (
-            <p className="text-red-400" data-testid="compare-status-error">
-              {compareState.error}
-            </p>
+            <div className="flex items-start gap-3 rounded border border-red-400/30 bg-red-950/30 p-3">
+              <p className="text-red-400 text-sm flex-1" data-testid="compare-status-error">
+                {compareState.error}
+              </p>
+              <button
+                type="button"
+                data-testid="compare-status-retry"
+                onClick={() => loadCompare(aTarget, bTarget)}
+                className="shrink-0 bg-white/10 hover:bg-white/20 text-white text-xs rounded px-3 py-1.5"
+              >
+                Retry
+              </button>
+            </div>
           )}
           {compareState.status === "ok" && compareState.data && (
             <CompararRevisao a={compareState.data[0]} b={compareState.data[1]} />
@@ -136,9 +160,19 @@ export default function App() {
           </div>
           {singleState.status === "loading" && <p data-testid="single-status-loading">Loading…</p>}
           {singleState.status === "error" && (
-            <p className="text-red-400" data-testid="single-status-error">
-              {singleState.error}
-            </p>
+            <div className="flex items-start gap-3 rounded border border-red-400/30 bg-red-950/30 p-3">
+              <p className="text-red-400 text-sm flex-1" data-testid="single-status-error">
+                {singleState.error}
+              </p>
+              <button
+                type="button"
+                data-testid="single-status-retry"
+                onClick={() => loadSingle(singleTarget)}
+                className="shrink-0 bg-white/10 hover:bg-white/20 text-white text-xs rounded px-3 py-1.5"
+              >
+                Retry
+              </button>
+            </div>
           )}
           {singleState.status === "ok" && singleState.data && (
             <>

@@ -27,8 +27,18 @@ test.describe("UC3 — Explorar (Atlas lens)", () => {
     const edges = page.locator(".react-flow__edge");
     await expect(edges).toHaveCount(4);
 
-    // Screen list below the canvas preserves source_ref + action chips +
-    // screenshot gallery (ADR-3 parity).
+    // Each node card renders a thumbnail (or an honest placeholder) in-node
+    // (P1 redesign, 2026-07-08) — the diagram should stand on its own.
+    const thumbsOrPlaceholders = page.locator(
+      '[data-testid="atlas-node-thumb"], [data-testid="atlas-node-thumb-placeholder"]',
+    );
+    await expect(thumbsOrPlaceholders.first()).toBeAttached();
+
+    // The bottom "Screens (N)" gallery is now collapsed by default (thumbnails
+    // moved in-node) — it still preserves source_ref + action chips + full
+    // multi-viewport screenshot gallery (ADR-3 parity) once expanded.
+    await expect(page.getByTestId("screen-list")).toHaveCount(0);
+    await page.getByTestId("screens-gallery-toggle").click();
     await expect(page.getByTestId("screen-list")).toBeVisible();
     await expect(page.getByTestId("screen-card")).toHaveCount(4);
     await expect(page.getByTestId("source-ref").first()).toBeVisible();

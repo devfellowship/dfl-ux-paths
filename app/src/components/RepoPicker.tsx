@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchRepos, type RepoOption } from "../lib/api";
+import { fetchRepos, defaultPathFor, defaultRefFor, type RepoOption } from "../lib/api";
 
 export interface RepoPickerValue {
   repo: string;
@@ -46,8 +46,15 @@ export function RepoPicker({
           className="bg-black/40 border border-white/15 rounded px-2 py-1 text-sm min-w-[220px]"
           value={value.repo}
           onChange={(e) => {
-            const opt = repos.find((r) => r.repo === e.target.value);
-            onChange({ ...value, repo: e.target.value, ref: opt?.ref || "main" });
+            const repo = e.target.value;
+            const opt = repos.find((r) => r.repo === repo);
+            // Snap `path`/`ref` to sane defaults for the newly-selected repo
+            // (fix, 2026-07-08): leaving a stale path from the previously
+            // selected repo is what caused Comparar's
+            // "SyntaxError: Unexpected token '<'" — a demo repo's fixture
+            // 404s under a real-repo path and the SPA catch-all serves HTML
+            // instead. See lib/api.ts DEMO_FIXTURE_PATHS for the full story.
+            onChange({ ...value, repo, path: defaultPathFor(repo), ref: opt?.ref || defaultRefFor(repo) });
           }}
         >
           {!repos.find((r) => r.repo === value.repo) && value.repo ? (
