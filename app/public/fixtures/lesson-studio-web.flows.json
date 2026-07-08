@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.2.0",
+  "app_id": "dfl-lesson-studio-web",
+  "app_version": "2026-06-06-ab12cd3",
+  "generated_at": "2026-06-06T18:00:00Z",
+  "tech_stack": ["next", "react", "tailwind"],
+  "screens": [
+    {
+      "id": "studio_projects_list",
+      "name": "Studio — Projects List",
+      "route": "studio/projects",
+      "page_class": "list",
+      "source_ref": {
+        "component_file": "app/studio/page.tsx",
+        "file_path_chain": ["app/layout.tsx", "app/studio/layout.tsx", "app/studio/page.tsx"]
+      },
+      "screenshots": [
+        { "platform": "web", "orientation": "portrait", "viewport": "375x812", "url": "https://placehold.co/375x812/1A1815/FEEBDC?text=Studio+Projects+(web)" }
+      ],
+      "actions": [
+        { "id": "open_project", "label": "Open a project", "next_screen": "studio_editor" },
+        { "id": "create_project", "label": "New project", "next_screen": "studio_editor" }
+      ]
+    },
+    {
+      "id": "studio_editor",
+      "name": "Studio — Lesson Editor",
+      "route": "studio/project/:id/editor",
+      "page_class": "editor",
+      "source_ref": {
+        "component_file": "app/studio/[id]/editor/page.tsx",
+        "file_path_chain": ["app/layout.tsx", "app/studio/[id]/editor/page.tsx"]
+      },
+      "screenshots": [
+        { "platform": "web", "orientation": "portrait", "viewport": "375x812", "url": "https://placehold.co/375x812/1A1815/FEEBDC?text=Editor+(web)" },
+        { "platform": "web", "orientation": "landscape", "viewport": "1440x900", "url": "https://placehold.co/1440x900/1A1815/FEEBDC?text=Editor+landscape+(web)" }
+      ],
+      "actions": [
+        { "id": "add_block", "label": "Add content block", "next_screen": "studio_editor" },
+        { "id": "open_preview", "label": "Preview lesson", "next_screen": "studio_preview" },
+        { "id": "save_lesson", "label": "Save", "next_screen": "studio_editor", "side_effect": "PATCH /lessons/:id" }
+      ]
+    },
+    {
+      "id": "studio_preview",
+      "name": "Studio — Lesson Preview",
+      "route": "studio/project/:id/preview",
+      "page_class": "preview",
+      "source_ref": { "component_file": "app/studio/[id]/preview/page.tsx" },
+      "screenshots": [
+        { "platform": "web", "orientation": "portrait", "viewport": "375x812", "url": "https://placehold.co/375x812/1A1815/FEEBDC?text=Preview+(web)" }
+      ],
+      "actions": [
+        { "id": "publish_lesson", "label": "Publish", "next_screen": "studio_editor", "side_effect": "POST /lessons/:id/publish" }
+      ]
+    },
+    {
+      "id": "studio_settings",
+      "name": "Studio — Project Settings",
+      "route": "studio/project/:id/settings",
+      "page_class": "settings",
+      "source_ref": { "component_file": "app/studio/[id]/settings/page.tsx" },
+      "screenshots": [],
+      "actions": [
+        { "id": "rename_project", "label": "Rename project", "next_screen": "studio_settings" }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "name": "Author a lesson",
+      "start": "studio_projects_list",
+      "steps": ["studio_projects_list", "studio_editor", "studio_preview"],
+      "actions": ["open_project", "add_block", "open_preview", "publish_lesson"]
+    }
+  ]
+}

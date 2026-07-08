@@ -1,0 +1,7 @@
+# Workspace root is always implicitly included (this file's directory — the
+# existing @devfellowship/dfl-ux-paths-cli package at repo root). `app/` is
+# added as a sibling workspace member so `pnpm install` at the repo root
+# hoists deps for both the CLI and the new ux-paths web app without breaking
+# the CLI's existing build/test/publish flow.
+packages:
+  - "app"

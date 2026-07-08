@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.2.0",
+  "app_id": "dfl-learn-mobile",
+  "app_version": "2026-06-06-ee99ff0",
+  "generated_at": "2026-06-06T18:00:00Z",
+  "tech_stack": ["expo", "react-native", "expo-router"],
+  "screens": [
+    {
+      "id": "studio_projects_list",
+      "name": "Studio Tab — Projects List",
+      "route": "studio/projects",
+      "page_class": "list",
+      "source_ref": {
+        "component_file": "app/(tabs)/studio/index.tsx",
+        "file_path_chain": ["app/_layout.tsx", "app/(tabs)/_layout.tsx", "app/(tabs)/studio/_layout.tsx", "app/(tabs)/studio/index.tsx"]
+      },
+      "screenshots": [
+        { "platform": "mobile", "orientation": "portrait", "viewport": "375x812", "url": "https://placehold.co/375x812/221F1B/E8B23B?text=Studio+Projects+(mobile)" }
+      ],
+      "actions": [
+        { "id": "open_project", "label": "Open a project", "next_screen": "studio_editor" },
+        { "id": "create_project", "label": "New project", "next_screen": "studio_editor" }
+      ]
+    },
+    {
+      "id": "studio_editor",
+      "name": "Studio Tab — Lesson Editor",
+      "route": "studio/project/:id/editor",
+      "page_class": "editor",
+      "source_ref": {
+        "component_file": "app/(tabs)/studio/[id]/editor.tsx",
+        "file_path_chain": ["app/_layout.tsx", "app/(tabs)/studio/[id]/editor.tsx"]
+      },
+      "screenshots": [
+        { "platform": "mobile", "orientation": "portrait", "viewport": "375x812", "url": "https://placehold.co/375x812/221F1B/E8B23B?text=Editor+(mobile)" }
+      ],
+      "actions": [
+        { "id": "add_block", "label": "Add content block", "next_screen": "studio_editor" },
+        { "id": "open_preview", "label": "Preview lesson", "next_screen": "studio_preview" }
+      ]
+    },
+    {
+      "id": "studio_preview",
+      "name": "Studio Tab — Lesson Preview",
+      "route": "studio/project/:id/preview",
+      "page_class": "preview",
+      "source_ref": { "component_file": "app/(tabs)/studio/[id]/preview.tsx" },
+      "screenshots": [],
+      "actions": [
+        { "id": "publish_lesson", "label": "Publish", "next_screen": "studio_editor", "side_effect": "POST /lessons/:id/publish" }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "name": "Author a lesson (mobile Studio tab)",
+      "start": "studio_projects_list",
+      "steps": ["studio_projects_list", "studio_editor", "studio_preview"],
+      "actions": ["open_project", "add_block", "open_preview", "publish_lesson"]
+    }
+  ]
+}

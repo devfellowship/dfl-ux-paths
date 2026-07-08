@@ -5,3 +5,10 @@ dist/
 .env
 .env.*
 coverage/
+
+# app/ (Vite/Playwright)
+app/playwright-report/
+app/test-results/
+app/blob-report/
+app/.vite/
+*.tsbuildinfo

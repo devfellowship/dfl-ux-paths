@@ -48,3 +48,55 @@ jobs:
 
       - name: actionlint
         uses: raven-actions/actionlint@v2
+
+  app-build:
+    runs-on: ubuntu-latest  # public repo: self-hosted dfl-runner is blocked (allows_public=false). Authorized Tainan TG 2026-06-06. devfellowship PRIVATE repos stay dfl-runner.
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '9'
+
+      - name: Install deps (workspace)
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Type check app
+        run: pnpm --filter @devfellowship/ux-paths-app run lint
+
+      - name: Build app
+        run: pnpm --filter @devfellowship/ux-paths-app run build
+
+  app-e2e:
+    runs-on: ubuntu-latest  # public repo: self-hosted dfl-runner is blocked (allows_public=false). Authorized Tainan TG 2026-06-06. devfellowship PRIVATE repos stay dfl-runner.
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '9'
+
+      - name: Install deps (workspace)
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @devfellowship/ux-paths-app exec playwright install --with-deps chromium
+
+      - name: Run e2e (UC1/UC2/UC3 — fixture-driven, offline)
+        run: pnpm --filter @devfellowship/ux-paths-app run e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: app/playwright-report/
+          retention-days: 14

@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.2.0",
+  "app_id": "demo-client-onboarding",
+  "app_version": "2026-07-08-fict001",
+  "generated_at": "2026-07-08T12:00:00Z",
+  "tech_stack": ["react", "figma-to-code (planned)"],
+  "screens": [
+    {
+      "id": "onboarding_welcome",
+      "name": "Welcome — value prop",
+      "route": "onboarding/welcome",
+      "fidelity": "fictional",
+      "screenshots": [
+        {
+          "platform": "web",
+          "orientation": "portrait",
+          "viewport": "375x812",
+          "url": "https://placehold.co/375x812/221F1B/E8B23B?text=Welcome+(fictional)"
+        }
+      ],
+      "actions": [{ "id": "tap_start", "label": "Get started", "next_screen": "onboarding_signup" }]
+    },
+    {
+      "id": "onboarding_signup",
+      "name": "Sign up",
+      "route": "onboarding/signup",
+      "fidelity": "fictional",
+      "screenshots": [
+        {
+          "platform": "web",
+          "orientation": "portrait",
+          "viewport": "375x812",
+          "url": "https://placehold.co/375x812/221F1B/E8B23B?text=Signup+(fictional)"
+        }
+      ],
+      "actions": [{ "id": "submit_signup", "label": "Create account", "next_screen": "onboarding_plan_picker", "side_effect": "POST /auth/signup" }]
+    },
+    {
+      "id": "onboarding_plan_picker",
+      "name": "Pick a plan",
+      "route": "onboarding/plan",
+      "fidelity": "sketch",
+      "screenshots": [],
+      "actions": [{ "id": "pick_plan", "label": "Choose plan", "next_screen": "onboarding_done" }]
+    },
+    {
+      "id": "onboarding_done",
+      "name": "You're in!",
+      "route": "onboarding/done",
+      "fidelity": "fictional",
+      "screenshots": [
+        {
+          "platform": "web",
+          "orientation": "portrait",
+          "viewport": "375x812",
+          "url": "https://placehold.co/375x812/221F1B/E8B23B?text=Done+(fictional)"
+        }
+      ],
+      "actions": []
+    }
+  ],
+  "flows": [
+    {
+      "name": "client_onboarding_happy_path",
+      "start": "onboarding_welcome",
+      "steps": ["onboarding_welcome", "onboarding_signup", "onboarding_plan_picker", "onboarding_done"],
+      "actions": ["tap_start", "submit_signup", "pick_plan"]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "req_value_prop",
+      "text": "Client must see the core value proposition before being asked to sign up.",
+      "covers": ["onboarding_welcome"],
+      "state": "ok"
+    },
+    {
+      "id": "req_frictionless_signup",
+      "text": "Sign-up must take at most one screen (email + password, no extra fields).",
+      "covers": ["onboarding_signup"],
+      "state": "ok"
+    },
+    {
+      "id": "req_plan_comparison",
+      "text": "Plan picker must show a side-by-side feature comparison table, not just price.",
+      "covers": ["onboarding_plan_picker"],
+      "state": "new"
+    },
+    {
+      "id": "req_referral_incentive",
+      "text": "Post-signup screen must offer a referral incentive (invite a friend, get credit).",
+      "covers": ["onboarding_referral_incentive"],
+      "state": "gap"
+    }
+  ],
+  "dead_code": []
+}
