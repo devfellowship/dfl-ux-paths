@@ -12,6 +12,7 @@ import {
   type NodeProps,
   type EdgeProps,
 } from "@xyflow/react";
+import { Button } from "@devfellowship/components";
 import type { FlowsJson, Screen } from "../lib/types";
 import { buildAtlasGraph } from "../lib/layout";
 import { MetaRow } from "../components/MetaRow";
@@ -31,16 +32,16 @@ function ScreenNode({ data }: NodeProps) {
 
   return (
     <div
-      className="w-[220px] overflow-hidden rounded-lg border border-[#e8b23b]/50 bg-[#221f1b] shadow-lg shadow-black/40"
+      className="w-[220px] overflow-hidden rounded-lg border border-s-brand-ring bg-card shadow-lg shadow-black/40"
       data-testid="atlas-node"
       data-screen-id={screen.id}
     >
       {/* Custom node types render no implicit connection points — Handles are
           required or React Flow silently drops edges attached to this node. */}
-      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-none !bg-[#e8b23b]" />
+      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-none !bg-primary" />
 
       <div
-        className="flex h-[104px] w-full items-center justify-center overflow-hidden border-b border-white/10 bg-black/40"
+        className="flex h-[104px] w-full items-center justify-center overflow-hidden border-b border-border bg-muted"
         data-testid="atlas-node-thumb-wrap"
       >
         {thumb ? (
@@ -67,7 +68,7 @@ function ScreenNode({ data }: NodeProps) {
         <div
           data-thumb-fallback
           data-testid="atlas-node-thumb-placeholder"
-          className="flex h-full w-full items-center justify-center text-[10px] italic text-white/25"
+          className="flex h-full w-full items-center justify-center text-[10px] italic text-muted-foreground"
           style={{ display: thumb ? "none" : "flex" }}
         >
           no preview
@@ -75,15 +76,15 @@ function ScreenNode({ data }: NodeProps) {
       </div>
 
       <div className="px-3 py-2 text-xs">
-        <div className="truncate font-semibold" title={label}>
+        <div className="truncate font-semibold text-foreground" title={label}>
           {label}
         </div>
-        <div className="truncate text-white/40" title={routeLabel}>
+        <div className="truncate font-mono text-muted-foreground" title={routeLabel}>
           {routeLabel}
         </div>
       </div>
 
-      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-none !bg-[#e8b23b]" />
+      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-none !bg-primary" />
     </div>
   );
 }
@@ -112,11 +113,11 @@ function ChipEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targ
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={{ stroke: "#e8b23b99", strokeWidth: 1.5 }} />
+      <BaseEdge id={id} path={edgePath} style={{ stroke: "var(--s-brand-ring)", strokeWidth: 1.5 }} />
       {label ? (
         <EdgeLabelRenderer>
           <div
-            className="nodrag nopan pointer-events-none absolute rounded-md border border-[#e8b23b]/40 bg-[#15130f] px-1.5 py-0.5 text-[10px] font-semibold text-[#feebdc]"
+            className="nodrag nopan pointer-events-none absolute rounded-md border border-s-brand-ring bg-popover px-1.5 py-0.5 text-[10px] font-semibold text-foreground"
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + offsetY}px)` }}
             data-testid="atlas-edge-label"
           >
@@ -138,10 +139,7 @@ export function ExplorarAtlas({ data }: { data: FlowsJson }) {
   return (
     <div className="space-y-4">
       <MetaRow data={data} />
-      <div
-        className="h-[70vh] min-h-[520px] w-full rounded-lg border border-white/10 bg-black/20"
-        data-testid="atlas-canvas"
-      >
+      <div className="h-[70vh] min-h-[520px] w-full overflow-hidden rounded-lg border border-border bg-card" data-testid="atlas-canvas">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -153,21 +151,23 @@ export function ExplorarAtlas({ data }: { data: FlowsJson }) {
         >
           <Background />
           <Controls showInteractive={false} />
-          <MiniMap pannable zoomable nodeColor="#e8b23b" maskColor="rgba(10,9,7,0.72)" bgColor="#15130f" />
+          <MiniMap pannable zoomable nodeColor="#E07A4A" maskColor="rgba(10,9,8,0.72)" bgColor="#141210" />
         </ReactFlow>
       </div>
       <div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           data-testid="screens-gallery-toggle"
           onClick={() => setShowGallery((v) => !v)}
-          className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#e8b23b]"
+          className="mb-2 gap-2 text-primary"
           aria-expanded={showGallery}
         >
           <span>{showGallery ? "▾" : "▸"}</span>
           Screens ({data.screens.length})
-          <span className="text-xs font-normal text-white/40">— now shown in-node above; expand for full detail</span>
-        </button>
+          <span className="text-xs font-normal text-muted-foreground">— now shown in-node above; expand for full detail</span>
+        </Button>
         {showGallery && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="screen-list">
             {data.screens.map((s) => (

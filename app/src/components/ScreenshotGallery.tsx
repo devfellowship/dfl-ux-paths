@@ -4,7 +4,10 @@ import type { Screenshot } from "../lib/types";
 export function ScreenshotGallery({ screenshots }: { screenshots?: Screenshot[] }) {
   if (!screenshots?.length) {
     return (
-      <div className="text-xs italic text-white/40 border border-dashed border-white/15 rounded p-3 text-center" data-testid="shots-placeholder">
+      <div
+        className="rounded-md border border-dashed border-border p-3 text-center text-xs italic text-muted-foreground"
+        data-testid="shots-placeholder"
+      >
         no screenshot
       </div>
     );
@@ -26,12 +29,12 @@ export function ScreenshotGallery({ screenshots }: { screenshots?: Screenshot[] 
               loading="lazy"
               src={sh.url}
               alt={cap}
-              className="w-full h-20 object-cover rounded border border-white/10 bg-black/30"
+              className="h-20 w-full rounded-md border border-border bg-muted object-cover"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
             />
-            <div className="text-[10px] text-white/50 mt-1 text-center">{cap}</div>
+            <div className="mt-1 text-center text-[10px] text-muted-foreground">{cap}</div>
           </a>
         );
       })}

@@ -1,5 +1,21 @@
 @import "tailwindcss";
+
+/* Scan the compiled DS component classes so Tailwind emits the utilities they
+   use: Button, Badge, Card, Select, Table, Alert, Input, Tabs. */
 @source "../node_modules/@devfellowship/components/dist";
+
+/* DFL design system: @devfellowship/components v3, DS v0. Sand dark theme,
+   brand amber E07A4A. tokens = the 3-layer token architecture plus the shadcn
+   compat aliases (background / card / primary map to sand + amber). tailwind =
+   the Tailwind v4 token-to-utility mappings so bg-background, bg-card,
+   bg-primary, border-border, text-muted-foreground and text-primary all
+   resolve. Together these replace the old hand-rolled palette (retired
+   brand-red plus mustard plus all-monospace body).
+
+   Brand webfonts (Barlow Condensed / Inter / JetBrains Mono) load via link in
+   index.html, not a remote CSS @import here, because a remote @import inside
+   the Tailwind v4 / Lightning CSS entry sheet fails the build. The DS token
+   font stacks degrade to system fonts if the webfonts fail to load. */
 @import "@devfellowship/components/tokens";
 @import "@devfellowship/components/tailwind";
 
@@ -9,22 +25,28 @@
   color-scheme: dark;
 }
 
+/* Base page chrome on DS tokens: sand surface, sand-50 ink, Inter body. */
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--dfl-bg, #1a1815);
-  color: var(--dfl-fg, #feebdc);
-  font-family: ui-monospace, "JetBrains Mono", monospace;
+  background: var(--s-surface-page);
+  color: var(--s-ink-primary);
+  font-family: var(--s-font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.dfl-chip {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  border: 1px solid rgba(232, 178, 59, 0.4);
-  padding: 0.15rem 0.6rem;
-  font-size: 0.75rem;
-  color: #e8b23b;
-  background: rgba(232, 178, 59, 0.08);
-  margin: 0.15rem;
+/* React Flow chrome (Controls / MiniMap) re-skinned onto DS surface tokens so
+   the canvas chrome matches the sand palette instead of React Flow default
+   light-grey buttons. */
+.react-flow__controls-button {
+  background: var(--s-surface-raised);
+  border-bottom: 1px solid var(--s-border-subtle);
+  color: var(--s-ink-secondary);
+}
+.react-flow__controls-button:hover {
+  background: var(--s-surface-elevated);
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Card, CardContent, Badge, Button } from "@devfellowship/components";
 import type { FlowsJson } from "../lib/types";
 import { ScreenshotGallery } from "../components/ScreenshotGallery";
 
@@ -29,52 +30,57 @@ export function RoteiroPresent({ data }: { data: FlowsJson }) {
 
   return (
     <div className="space-y-4" data-testid="roteiro-view">
-      <div className="flex items-center justify-between text-xs text-white/50">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span data-testid="roteiro-step-indicator">
           step {order.length ? idx + 1 : 0} / {order.length}
         </span>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           disabled
           title="Export image/PDF lands in Fase 4 (ADR-7) — shared engine, UI + MCP export_flow()"
-          className="dfl-chip opacity-50 cursor-not-allowed"
           data-testid="roteiro-export-stub"
         >
           Export (image/PDF) — coming Fase 4
-        </button>
+        </Button>
       </div>
 
       {current ? (
-        <div className="rounded-lg border border-[#e8b23b]/30 bg-black/20 p-6 space-y-3" data-testid="roteiro-slide" data-screen-id={current.id}>
-          <h2 className="text-lg font-semibold">{current.name}</h2>
-          {current.fidelity ? <span className="dfl-chip">{current.fidelity}</span> : null}
-          <ScreenshotGallery screenshots={current.screenshots} />
-        </div>
+        <Card data-testid="roteiro-slide" data-screen-id={current.id} className="border-s-brand-ring">
+          <CardContent className="space-y-3 p-6">
+            <h2 className="text-lg font-semibold text-foreground">{current.name}</h2>
+            {current.fidelity ? <Badge variant="outline">{current.fidelity}</Badge> : null}
+            <ScreenshotGallery screenshots={current.screenshots} />
+          </CardContent>
+        </Card>
       ) : (
-        <div className="text-sm text-white/40 italic" data-testid="roteiro-empty">
+        <div className="text-sm italic text-muted-foreground" data-testid="roteiro-empty">
           No screens to narrate.
         </div>
       )}
 
       <div className="flex gap-2">
-        <button
+        <Button
           type="button"
-          className="dfl-chip"
+          variant="outline"
+          size="sm"
           onClick={() => setIdx((i) => Math.max(0, i - 1))}
           disabled={idx === 0}
           data-testid="roteiro-prev"
         >
           ← prev
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="dfl-chip"
+          variant="outline"
+          size="sm"
           onClick={() => setIdx((i) => Math.min(order.length - 1, i + 1))}
           disabled={idx >= order.length - 1}
           data-testid="roteiro-next"
         >
           next →
-        </button>
+        </Button>
       </div>
     </div>
   );
