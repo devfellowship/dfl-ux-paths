@@ -1,4 +1,14 @@
 import { useEffect, useState } from "react";
+import {
+  Label,
+  Input,
+  Button,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@devfellowship/components";
 import { fetchRepos, defaultPathFor, defaultRefFor, type RepoOption } from "../lib/api";
 
 export interface RepoPickerValue {
@@ -30,6 +40,8 @@ export function RepoPicker({
     };
   }, []);
 
+  const knownRepo = repos.some((r) => r.repo === value.repo);
+
   return (
     <form
       className="flex flex-wrap items-end gap-2"
@@ -39,14 +51,11 @@ export function RepoPicker({
       }}
       data-testid={`${idPrefix}-form`}
     >
-      <label className="flex flex-col text-xs gap-1">
-        repo
-        <select
-          data-testid={`${idPrefix}-repo`}
-          className="bg-black/40 border border-white/15 rounded px-2 py-1 text-sm min-w-[220px]"
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs text-muted-foreground">repo</Label>
+        <Select
           value={value.repo}
-          onChange={(e) => {
-            const repo = e.target.value;
+          onValueChange={(repo) => {
             const opt = repos.find((r) => r.repo === repo);
             // Snap `path`/`ref` to sane defaults for the newly-selected repo
             // (fix, 2026-07-08): leaving a stale path from the previously
@@ -57,32 +66,34 @@ export function RepoPicker({
             onChange({ ...value, repo, path: defaultPathFor(repo), ref: opt?.ref || defaultRefFor(repo) });
           }}
         >
-          {!repos.find((r) => r.repo === value.repo) && value.repo ? (
-            <option value={value.repo}>{value.repo}</option>
-          ) : null}
-          {repos.map((r) => (
-            <option key={r.repo} value={r.repo}>
-              {r.repo}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="flex flex-col text-xs gap-1 flex-1">
-        path
-        <input
+          <SelectTrigger data-testid={`${idPrefix}-repo`} className="min-w-[220px] font-mono text-sm">
+            <SelectValue placeholder="select repo" />
+          </SelectTrigger>
+          <SelectContent>
+            {!knownRepo && value.repo ? <SelectItem value={value.repo}>{value.repo}</SelectItem> : null}
+            {repos.map((r) => (
+              <SelectItem key={r.repo} value={r.repo}>
+                {r.repo}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-1 flex-col gap-1">
+        <Label htmlFor={`${idPrefix}-path`} className="text-xs text-muted-foreground">
+          path
+        </Label>
+        <Input
+          id={`${idPrefix}-path`}
           data-testid={`${idPrefix}-path`}
-          className="bg-black/40 border border-white/15 rounded px-2 py-1 text-sm"
+          className="font-mono text-sm"
           value={value.path}
           onChange={(e) => onChange({ ...value, path: e.target.value })}
         />
-      </label>
-      <button
-        type="submit"
-        className="bg-[#C52614] hover:bg-[#a81f10] text-white text-sm rounded px-3 py-1.5"
-        data-testid={`${idPrefix}-load`}
-      >
+      </div>
+      <Button type="submit" size="sm" data-testid={`${idPrefix}-load`}>
         Load
-      </button>
+      </Button>
     </form>
   );
 }

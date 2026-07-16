@@ -2,18 +2,16 @@ import type { FlowsJson } from "../lib/types";
 
 export function MetaRow({ data }: { data: FlowsJson }) {
   return (
-    <div className="flex flex-wrap gap-4 text-xs text-[#e8b23b] border-b border-white/10 pb-2 mb-3">
+    <div className="flex flex-wrap gap-4 border-b border-border pb-2 mb-3 text-xs text-muted-foreground">
+      <span className="font-mono font-semibold text-primary">{data.app_id}</span>
       <span>
-        <b>{data.app_id}</b>
+        build <b className="font-mono text-foreground">{data.app_version}</b>
       </span>
       <span>
-        build <b>{data.app_version}</b>
+        schema <b className="font-mono text-foreground">{data.schema_version}</b>
       </span>
       <span>
-        schema <b>{data.schema_version}</b>
-      </span>
-      <span>
-        stack <b>{(data.tech_stack || []).join(", ") || "—"}</b>
+        stack <b className="font-mono text-foreground">{(data.tech_stack || []).join(", ") || "—"}</b>
       </span>
       <span>
         {data.screens.length} screens · {data.flows.length} flows

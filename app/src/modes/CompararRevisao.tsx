@@ -1,3 +1,4 @@
+import { Card, CardContent, Badge, type BadgeProps } from "@devfellowship/components";
 import type { FlowsJson } from "../lib/types";
 import { pairByScreenId, type DiffStatus } from "../lib/compare";
 import { ActionChips } from "../components/ActionChips";
@@ -11,11 +12,13 @@ const STATUS_LABEL: Record<DiffStatus, string> = {
   removed: "removed",
 };
 
-const STATUS_CLASS: Record<DiffStatus, string> = {
-  paired: "text-emerald-400 border-emerald-400/40",
-  changed: "text-yellow-300 border-yellow-300/40",
-  added: "text-sky-300 border-sky-300/40",
-  removed: "text-red-400 border-red-400/40",
+// Map the diff status onto DS semantic Badge variants (sand-palette aware)
+// instead of ad-hoc emerald/sky/yellow/red Tailwind colors.
+const STATUS_VARIANT: Record<DiffStatus, BadgeProps["variant"]> = {
+  paired: "success",
+  changed: "warning",
+  added: "info",
+  removed: "danger",
 };
 
 /** Comparar mode — Revisão lens (UC2 default, ADR-2/ADR-9). */
@@ -34,27 +37,23 @@ export function CompararRevisao({ a, b }: { a: FlowsJson; b: FlowsJson }) {
 
       <div className="space-y-3" data-testid="compare-pairs">
         {result.pairs.map((p) => (
-          <div
-            key={p.id}
-            className="rounded-lg border border-white/10 bg-black/20 p-3"
-            data-testid="compare-pair"
-            data-screen-id={p.id}
-            data-status={p.status}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm">
-                <span className="font-mono text-[#e8b23b]">{p.id}</span>{" "}
-                <span className="text-white/40">{p.a?.route || p.b?.route || ""}</span>
+          <Card key={p.id} data-testid="compare-pair" data-screen-id={p.id} data-status={p.status}>
+            <CardContent className="p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-sm">
+                  <span className="font-mono text-primary">{p.id}</span>{" "}
+                  <span className="font-mono text-muted-foreground">{p.a?.route || p.b?.route || ""}</span>
+                </div>
+                <Badge variant={STATUS_VARIANT[p.status]} data-testid="pair-status">
+                  {STATUS_LABEL[p.status]}
+                </Badge>
               </div>
-              <span className={`dfl-chip ${STATUS_CLASS[p.status]}`} data-testid="pair-status">
-                {STATUS_LABEL[p.status]}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Side label={a.app_id} screen={p.a} />
-              <Side label={b.app_id} screen={p.b} />
-            </div>
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Side label={a.app_id} screen={p.a} />
+                <Side label={b.app_id} screen={p.b} />
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>
@@ -63,24 +62,29 @@ export function CompararRevisao({ a, b }: { a: FlowsJson; b: FlowsJson }) {
 
 function Stat({ label, value, testId }: { label: string; value: number; testId: string }) {
   return (
-    <div className="rounded border border-white/10 bg-black/20 p-2 text-center" data-testid={testId}>
-      <div className="text-xl font-bold">{value}</div>
-      <div className="text-[10px] text-white/50">{label}</div>
-    </div>
+    <Card data-testid={testId}>
+      <CardContent className="p-2 text-center">
+        <div className="text-xl font-bold text-foreground">{value}</div>
+        <div className="text-[10px] text-muted-foreground">{label}</div>
+      </CardContent>
+    </Card>
   );
 }
 
 function Side({ label, screen }: { label: string; screen: FlowsJson["screens"][number] | null }) {
   if (!screen) {
     return (
-      <div className="rounded border border-dashed border-white/15 p-2 text-xs text-white/40" data-testid="pair-side-empty">
+      <div
+        className="rounded-md border border-dashed border-border p-2 text-xs text-muted-foreground"
+        data-testid="pair-side-empty"
+      >
         absent on {label}
       </div>
     );
   }
   return (
     <div className="space-y-1" data-testid="pair-side">
-      <div className="text-[10px] uppercase tracking-wide text-white/40">{label}</div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <SourceRefView sourceRef={screen.source_ref} />
       <ActionChips actions={screen.actions} />
       <ScreenshotGallery screenshots={screen.screenshots} />

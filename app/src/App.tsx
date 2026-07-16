@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Tabs, TabsList, TabsTrigger, Alert, AlertDescription, Button } from "@devfellowship/components";
 import type { FlowsJson } from "./lib/types";
 import { fetchFlows, FlowsFetchError, defaultPathFor, defaultRefFor, type RepoRef } from "./lib/api";
 import { parseDeepLink, buildDeepLink, type ModeName } from "./lib/deeplink";
@@ -20,6 +21,20 @@ const TABS: { id: ModeName; label: string }[] = [
 ];
 
 type LoadState<T> = { status: "idle" | "loading" | "error" | "ok"; error?: string; data?: T };
+
+/** DS Alert (danger) + Retry — replaces the ad-hoc red error boxes. */
+function ErrorPanel({ message, onRetry, testId }: { message: string; onRetry: () => void; testId: string }) {
+  return (
+    <Alert variant="danger" className="flex items-start gap-3">
+      <AlertDescription className="flex-1 text-sm" data-testid={testId}>
+        {message}
+      </AlertDescription>
+      <Button type="button" variant="secondary" size="sm" onClick={onRetry} data-testid={`${testId.replace("-error", "")}-retry`}>
+        Retry
+      </Button>
+    </Alert>
+  );
+}
 
 export default function App() {
   const initial = useMemo(() => parseDeepLink(location.search), []);
@@ -104,28 +119,24 @@ export default function App() {
   }, [mode, singleTarget, aTarget, bTarget]);
 
   return (
-    <div className="w-full px-4 py-4 sm:px-6 lg:px-8">
-      <header className="mb-4">
-        <h1 className="text-xl font-bold">
-          ux-paths <span className="text-white/40 font-normal text-sm">caminhos de UX</span>
-        </h1>
+    <div className="w-full overflow-x-clip px-4 py-4 sm:px-6 lg:px-8">
+      <header className="mb-4 flex items-baseline gap-2">
+        <h1 className="font-mono text-xl font-bold tracking-tight text-foreground">ux-paths</h1>
+        <span className="text-sm font-normal text-muted-foreground">caminhos de UX</span>
       </header>
 
-      <nav className="flex gap-1 mb-4 border-b border-white/10" data-testid="mode-tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            data-testid={`tab-${t.id}`}
-            onClick={() => setMode(t.id)}
-            className={`px-3 py-2 text-sm border-b-2 -mb-px ${
-              mode === t.id ? "border-[#C52614] text-white" : "border-transparent text-white/50 hover:text-white/80"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
+      <Tabs value={mode} onValueChange={(v) => setMode(v as ModeName)} className="mb-4">
+        {/* max-w-full + overflow-x-auto so the 4-tab bar scrolls WITHIN itself
+            on narrow screens instead of forcing horizontal page scroll (mobile
+            docScrollW overflow, found via Playwright). */}
+        <TabsList data-testid="mode-tabs" className="w-full max-w-full justify-start overflow-x-auto">
+          {TABS.map((t) => (
+            <TabsTrigger key={t.id} value={t.id} data-testid={`tab-${t.id}`} className="shrink-0">
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {mode === "comparar" ? (
         <section>
@@ -133,21 +144,13 @@ export default function App() {
             <RepoPicker idPrefix="a" value={aTarget} onChange={setATarget} onSubmit={() => loadCompare(aTarget, bTarget)} />
             <RepoPicker idPrefix="b" value={bTarget} onChange={setBTarget} onSubmit={() => loadCompare(aTarget, bTarget)} />
           </div>
-          {compareState.status === "loading" && <p data-testid="compare-status-loading">Loading both sides…</p>}
+          {compareState.status === "loading" && (
+            <p className="text-sm text-muted-foreground" data-testid="compare-status-loading">
+              Loading both sides…
+            </p>
+          )}
           {compareState.status === "error" && (
-            <div className="flex items-start gap-3 rounded border border-red-400/30 bg-red-950/30 p-3">
-              <p className="text-red-400 text-sm flex-1" data-testid="compare-status-error">
-                {compareState.error}
-              </p>
-              <button
-                type="button"
-                data-testid="compare-status-retry"
-                onClick={() => loadCompare(aTarget, bTarget)}
-                className="shrink-0 bg-white/10 hover:bg-white/20 text-white text-xs rounded px-3 py-1.5"
-              >
-                Retry
-              </button>
-            </div>
+            <ErrorPanel message={compareState.error!} onRetry={() => loadCompare(aTarget, bTarget)} testId="compare-status-error" />
           )}
           {compareState.status === "ok" && compareState.data && (
             <CompararRevisao a={compareState.data[0]} b={compareState.data[1]} />
@@ -158,21 +161,13 @@ export default function App() {
           <div className="mb-4">
             <RepoPicker idPrefix="s" value={singleTarget} onChange={setSingleTarget} onSubmit={() => loadSingle(singleTarget)} />
           </div>
-          {singleState.status === "loading" && <p data-testid="single-status-loading">Loading…</p>}
+          {singleState.status === "loading" && (
+            <p className="text-sm text-muted-foreground" data-testid="single-status-loading">
+              Loading…
+            </p>
+          )}
           {singleState.status === "error" && (
-            <div className="flex items-start gap-3 rounded border border-red-400/30 bg-red-950/30 p-3">
-              <p className="text-red-400 text-sm flex-1" data-testid="single-status-error">
-                {singleState.error}
-              </p>
-              <button
-                type="button"
-                data-testid="single-status-retry"
-                onClick={() => loadSingle(singleTarget)}
-                className="shrink-0 bg-white/10 hover:bg-white/20 text-white text-xs rounded px-3 py-1.5"
-              >
-                Retry
-              </button>
-            </div>
+            <ErrorPanel message={singleState.error!} onRetry={() => loadSingle(singleTarget)} testId="single-status-error" />
           )}
           {singleState.status === "ok" && singleState.data && (
             <>
