@@ -2,7 +2,7 @@
 #   docker build -f app/Dockerfile -t dfl-ux-paths-app:latest .
 # Dokploy app config: build context = repo root, dockerfile path = app/Dockerfile.
 
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /repo
 RUN corepack enable && corepack prepare pnpm@9 --activate
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
@@ -12,7 +12,7 @@ COPY app/package.json ./app/package.json
 # fetch the full lockfile-driven install scoped to the app package.
 RUN pnpm install --filter @devfellowship/ux-paths-app... --frozen-lockfile=false
 
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /repo
 RUN corepack enable && corepack prepare pnpm@9 --activate
 COPY --from=deps /repo/node_modules ./node_modules
@@ -21,7 +21,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY app ./app
 RUN pnpm --filter @devfellowship/ux-paths-app run build
 
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
 # WORKDIR mirrors the build layout (/repo/app) so pnpm's relative symlinks in
 # app/node_modules (e.g. express -> ../../node_modules/.pnpm/express@…) still
 # resolve at runtime. Copying ONLY app/node_modules into a fresh /app breaks
